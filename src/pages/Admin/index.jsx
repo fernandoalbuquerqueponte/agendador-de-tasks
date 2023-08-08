@@ -12,12 +12,14 @@ import {
    where,
    doc,
    deleteDoc,
+   updateDoc,
 } from "firebase/firestore"
 
 export default function Admin() {
    const [tarefaInput, setTarefaInput] = useState("")
    const [user, setUser] = useState({})
    const [tarefas, setTarefas] = useState([])
+   const [editTask, setEditTask] = useState({})
 
    useEffect(() => {
       async function loadTarefas() {
@@ -59,6 +61,11 @@ export default function Admin() {
          return
       }
 
+      if (editTask?.id) {
+         handleUpdateTask()
+         return
+      }
+
       await addDoc(collection(db, "tarefas"), {
          tarefa: tarefaInput,
          created: new Date(),
@@ -82,6 +89,29 @@ export default function Admin() {
       await deleteDoc(docRef)
    }
 
+   async function handleEditTask(item) {
+      setTarefaInput(item.tarefa)
+      setEditTask(item)
+   }
+
+   async function handleUpdateTask() {
+      const docRef = doc(db, "tarefas", editTask.id)
+
+      await updateDoc(docRef, {
+         tarefa: tarefaInput,
+      })
+         .then(() => {
+            console.log("tarefa atualizada!")
+            setTarefaInput("")
+            setEditTask({})
+         })
+         .catch((error) => {
+            console.log("erro ao atualizar tarefa." + error)
+            setTarefaInput("")
+            setEditTask({})
+         })
+   }
+
    return (
       <div className="admin-container">
          <h1>Minhas tarefas</h1>
@@ -92,9 +122,16 @@ export default function Admin() {
                value={tarefaInput}
                onChange={(e) => setTarefaInput(e.target.value)}
             />
-            <button className="btn-register" type="submit">
-               Registrar tarefa
-            </button>
+
+            {Object.keys(editTask).length > 0 ? (
+               <button className="btn-register" type="submit">
+                  Atualizar tarefa
+               </button>
+            ) : (
+               <button className="btn-register" type="submit">
+                  Registrar tarefa
+               </button>
+            )}
          </form>
 
          {tarefas.map((task) => (
@@ -102,7 +139,12 @@ export default function Admin() {
                <p>{task.tarefa}</p>
 
                <div>
-                  <button>Editar</button>
+                  <button
+                     className="btn-edit-task"
+                     onClick={() => handleEditTask(task)}
+                  >
+                     Editar
+                  </button>
                   <button
                      onClick={() => handleDeleteTask(task.id)}
                      className="btn-delete"

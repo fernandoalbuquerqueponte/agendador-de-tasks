@@ -11,6 +11,11 @@
 
 .btn-register {
    margin-bottom: 28px;
+   transition: all 0.3s;
+}
+.btn-register:hover {
+   color: #fff;
+   background-color: #c4c4c4;
 }
 
 .list {
@@ -39,6 +44,11 @@
 .btn-delete {
    color: #ffcc23;
    background-color: transparent;
+   transition: all 0.5s;
+}
+.btn-delete:hover {
+   color: #fff;
+   background-color: red;
 }
 
 .btn-logout {
@@ -58,4 +68,9 @@
 .btn-logout:hover {
    background-color: rgba(219, 38, 41, 1);
    color: #fff;
+}
+
+.btn-edit-task:hover {
+   color: #fff;
+   background-color: #ffcc23;
 }
