@@ -3,16 +3,51 @@ import "./admin.css"
 
 import { auth, db } from "../../firebaseConnection"
 import { signOut } from "firebase/auth"
-import { addDoc, collection } from "firebase/firestore"
+import {
+   addDoc,
+   collection,
+   onSnapshot,
+   query,
+   orderBy,
+   where,
+   doc,
+   deleteDoc,
+} from "firebase/firestore"
 
 export default function Admin() {
    const [tarefaInput, setTarefaInput] = useState("")
    const [user, setUser] = useState({})
+   const [tarefas, setTarefas] = useState([])
 
    useEffect(() => {
       async function loadTarefas() {
-         const useDetails = localStorage.getItem("@userDetails")
-         setUser(JSON.parse(useDetails))
+         const userDetails = localStorage.getItem("@userDetails")
+         setUser(JSON.parse(userDetails))
+
+         if (userDetails) {
+            const data = JSON.parse(userDetails)
+
+            const tarefaRef = collection(db, "tarefas")
+
+            const q = query(
+               tarefaRef,
+               orderBy("created", "desc"),
+               where("userUid", "==", data?.uid)
+            )
+
+            const unsub = onSnapshot(q, (snapshot) => {
+               let lista = []
+               snapshot.forEach((doc) => {
+                  lista.push({
+                     id: doc.id,
+                     tarefa: doc.data().tarefa,
+                     userUid: doc.data().userUid,
+                  })
+               })
+               console.log({ lista })
+               setTarefas(lista)
+            })
+         }
       }
       loadTarefas()
    }, [])
@@ -42,6 +77,11 @@ export default function Admin() {
       await signOut(auth)
    }
 
+   async function handleDeleteTask(id) {
+      const docRef = doc(db, "tarefas", id)
+      await deleteDoc(docRef)
+   }
+
    return (
       <div className="admin-container">
          <h1>Minhas tarefas</h1>
@@ -57,14 +97,21 @@ export default function Admin() {
             </button>
          </form>
 
-         <article className="list">
-            <p>Estudar javascript e react</p>
+         {tarefas.map((task) => (
+            <article key={task.id} className="list">
+               <p>{task.tarefa}</p>
 
-            <div>
-               <button>Editar</button>
-               <button className="btn-delete">Concluir</button>
-            </div>
-         </article>
+               <div>
+                  <button>Editar</button>
+                  <button
+                     onClick={() => handleDeleteTask(task.id)}
+                     className="btn-delete"
+                  >
+                     Concluir
+                  </button>
+               </div>
+            </article>
+         ))}
 
          <button className="btn-logout" onClick={handleLogout}>
             Sair
